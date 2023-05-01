@@ -4,6 +4,7 @@ from flask import Flask, request
 from db import Course, Assignment, User
 import os
 import users_dao
+import datetime
 
 app = Flask(__name__)
 db_filename = "cms.db"
@@ -42,14 +43,14 @@ def register():
     """
     body = json.loads(request.data)
     name = body.get("name")
-    bio = body.get("bio")
+    netid = body.get("netid")
     email = body.get("email")
     password = body.get("password")
 
-    if name is None or bio is None or email is None or password is None:
+    if name is None or netid is None or email is None or password is None:
         return failure_response("Invalid response to required fields")
     
-    created, user = users_dao.create_user(email, password, name, bio)
+    created, user = users_dao.create_user(email, password, name, netid)
     if not created:
         return failure_response("This user already exists.")
     
@@ -57,6 +58,9 @@ def register():
 
 @app.route("/login/", methods=["POST"])
 def login():
+    """
+    Endpoint for logging a user in
+    """
     body = json.loads(request.data)
     email = body.get("email")
     password = body.get("password")
@@ -72,6 +76,9 @@ def login():
 
 @app.route("/secret/", methods=["POST"])
 def secret_message():
+    """
+    Endpoint for secret message (Testing only)
+    """
     success, session_token = extract_token(request)
     if not success:
         return session_token
@@ -94,6 +101,21 @@ def update_session():
         return failure_response("Invalid update token")
     
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
+
+@app.route("/logout/", methods=["POST"])
+def logout():
+    """
+    Endpoint for logging a user out.
+    """
+    success, session_token = extract_token(request)
+    if not success:
+        return session_token
+    user = users_dao.get_user_by_session_token(session_token)
+    if user is None or not user.verify_session_token(session_token):
+        return failure_response("Invalid session token.")
+    user.session_expiration = datetime.datetime.now() 
+    db.session.commit()
+    return success_response({"message": "logout successful"})
     
 
 
