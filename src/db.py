@@ -7,7 +7,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-
 class User(db.Model):
     """
     Class representing Users
@@ -22,7 +21,6 @@ class User(db.Model):
     session_expiration = db.Column(db.DateTime, nullable=False)
     update_token = db.Column(db.String, nullable=False)
     schedule = db.relationship("Schedule")
-    friends = db.relationship("Friendship", cascade="delete")
 
     def __init__(self, **kwargs):
         """
@@ -39,7 +37,7 @@ class User(db.Model):
         """
         Randomly generates hashed tokens (used for session/update tokens)
         """
-        return hashlib.sha1(os.random(64)).hexdigest()
+        return hashlib.sha1(os.urandom(64)).hexdigest()
 
     def renew_session(self):
         """
@@ -84,11 +82,12 @@ class Friendship(db.Model):
     __tablename__ = "friendship"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     timestamp = db.Column(db.String, nullable=False)
-    sender_id = db.Column(db.String, db.ForeignKey(
+    user_id = db.Column(db.String, db.ForeignKey(
         "user.netid"), nullable=False)
-    reciever_id = db.Column(db.String, db.ForeignKey(
+    friend_id = db.Column(db.String, db.ForeignKey(
         "user.netid"), nullable=False)
     accepted = db.Column(db.Integer)
+    friend = db.relationship("User", backref=db.backref("friends", cascade="all, delete-orphan"), foreign_keys=[friend_id])
 
     def __init__(self, **kwargs):
         self.timestamp = kwargs.get("timestamp")

@@ -4,28 +4,29 @@ DAO (Data Access Object) file
 Helper file containing functions for accessing data in our database
 """
 
-import db
+from db import User
+from db import db
 
 
 def get_user_by_email(email):
     """
     Returns a user object from the database given an email
     """
-    return db.User.query.filter(db.User.email == email).first()
+    return User.query.filter(User.email == email).first()
 
 
 def get_user_by_session_token(session_token):
     """
     Returns a user object from the database given a session token
     """
-    return db.User.query.filter(db.User.session_token == session_token).first()
+    return User.query.filter(User.session_token == session_token).first()
 
 
 def get_user_by_update_token(update_token):
     """
     Returns a user object from the database given an update token
     """
-    return db.User.query.filter(db.User.update_token == update_token).first()
+    return User.query.filter(User.update_token == update_token).first()
 
 
 def verify_credentials(email, password):
@@ -48,7 +49,7 @@ def create_user(email, password, name, netid):
     if optional_user is not None:
         return False, optional_user
     
-    user = db.User(name=name, email=email, password=password, netid=netid)
+    user = User(name=name, email=email, password=password, netid=netid)
     db.session.add(user)
     db.session.commit()
 
