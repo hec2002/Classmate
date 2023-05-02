@@ -1,7 +1,7 @@
 import json
 from db import db
 from flask import Flask, request
-from db import Course, Assignment, User
+from db import User
 import os
 import users_dao
 import datetime
@@ -17,11 +17,14 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+
 def success_response(data, code=200):
     return json.dumps(data), code
 
+
 def failure_response(message, code=404):
     return json.dumps({"error": message}), code
+
 
 def extract_token(request):
     """
@@ -36,6 +39,7 @@ def extract_token(request):
     return True, bearer_token
 # your routes here
 
+
 @app.route("/register/", methods=["POST"])
 def register():
     """
@@ -49,12 +53,13 @@ def register():
 
     if name is None or netid is None or email is None or password is None:
         return failure_response("Invalid response to required fields")
-    
+
     created, user = users_dao.create_user(email, password, name, netid)
     if not created:
         return failure_response("This user already exists.")
-    
+
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
+
 
 @app.route("/login/", methods=["POST"])
 def login():
@@ -67,12 +72,13 @@ def login():
 
     if email is None or password is None:
         return failure_response("Invalid username or password.")
-    
+
     success, user = users_dao.verify_credentials(email, password)
     if not success:
         return failure_response("Invalid username or password.")
-    
+
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
+
 
 @app.route("/secret/", methods=["POST"])
 def secret_message():
@@ -87,6 +93,7 @@ def secret_message():
         return failure_response("Invalid session token")
     return success_response({"message": "Session tokens are working."})
 
+
 @app.route("/session/", methods=["Post"])
 def update_session():
     """
@@ -99,8 +106,9 @@ def update_session():
 
     if user is None:
         return failure_response("Invalid update token")
-    
+
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
+
 
 @app.route("/logout/", methods=["POST"])
 def logout():
@@ -113,12 +121,9 @@ def logout():
     user = users_dao.get_user_by_session_token(session_token)
     if user is None or not user.verify_session_token(session_token):
         return failure_response("Invalid session token.")
-    user.session_expiration = datetime.datetime.now() 
+    user.session_expiration = datetime.datetime.now()
     db.session.commit()
     return success_response({"message": "logout successful"})
-    
-
-
 
 
 if __name__ == "__main__":

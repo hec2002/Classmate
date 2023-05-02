@@ -7,8 +7,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-user_to_user = db.Table("user_to_user", db.Column("user_id", db.Integer, db.ForeignKey("user.id")),
-db.Column("other_id", db.Integer, db.ForeignKey("user.id")))
 
 class User(db.Model):
     """
@@ -16,15 +14,15 @@ class User(db.Model):
     """
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String)
-    netid = db.Column(db.String, nullabe=False)
+    name = db.Column(db.String, nullable=False)
+    netid = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False)
     password_digest = db.Column(db.String, nullable=False)
     session_token = db.Column(db.String, nullable=False)
     session_expiration = db.Column(db.DateTime, nullable=False)
     update_token = db.Column(db.String, nullable=False)
-    schedule = db.relationship("Schedule", nullable=False)
-    friends = db.relationship("User", secondary=user_to_user, backpopulates="friends")
+    schedule = db.relationship("Schedule")
+    friends = db.relationship("Friendship", cascade="delete")
 
     def __init__(self, **kwargs):
         """
@@ -33,7 +31,8 @@ class User(db.Model):
         self.name = kwargs.get("name")
         self.netid = kwargs.get("netid")
         self.email = kwargs.get("email")
-        self.password_digest = bcrypt.hashpw(kwargs.get("password").encode("utf8"), bcrypt.gensalt(rounds=13))
+        self.password_digest = bcrypt.hashpw(kwargs.get(
+            "password").encode("utf8"), bcrypt.gensalt(rounds=13))
         self.renew_session()
 
     def _urlsafe_base_64(self):
@@ -41,7 +40,7 @@ class User(db.Model):
         Randomly generates hashed tokens (used for session/update tokens)
         """
         return hashlib.sha1(os.random(64)).hexdigest()
-    
+
     def renew_session(self):
         """
         Creates new session token. Sets expiration time to be a day from now. 
@@ -71,9 +70,38 @@ class User(db.Model):
 
     def serialize(self):
         return {
-            "name" : self.name,
-            "email" : self.email,
-            "netid" : self.netid
+            "name": self.name,
+            "email": self.email,
+            "netid": self.netid,
+            "friends": [friend.serialize for friend in self.friends]
+        }
+
+
+class Friendship(db.Model):
+    """
+    Class representing friendships between users.
+    """
+    __tablename__ = "friendship"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    timestamp = db.Column(db.String, nullable=False)
+    sender_id = db.Column(db.String, db.ForeignKey(
+        "user.netid"), nullable=False)
+    reciever_id = db.Column(db.String, db.ForeignKey(
+        "user.netid"), nullable=False)
+    accepted = db.Column(db.Integer)
+
+    def __init__(self, **kwargs):
+        self.timestamp = kwargs.get("timestamp")
+        self.sender_id = kwargs.get("sender_id")
+        self.reciever_id = kwargs.get("receiver_id")
+        self.accepted = kwargs.get("accepted")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "receiver_id": self.reciever_id,
+            "accepted": bool(self.accepted)
         }
 
 
@@ -84,7 +112,10 @@ class Schedule(db.Model):
     __tablename__ = "schedule"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    classes = db.relationship("Class", nullable=False)
+    classes = db.relationship("Class")
+
+    def __int__(self, **kwargs):
+        self.user_id = kwargs.get("user_id")
 
     def serialize(self):
         return {
@@ -93,24 +124,36 @@ class Schedule(db.Model):
             "classes": [c.serialize for c in self.classes]
         }
 
+
 class Class(db.Model):
     __tablename__ = "class"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    code = db.Column(db.String, nullabe=False)
+    code = db.Column(db.String, nullable=False)
     name = db.Column(db.String, nullable=False)
-    start_time = db.Column(db.String, nullable=False)
-    end_time = db.Column(db.String, nullable=False)
-    schedule = db.Column(db.Integer, db.ForeignKey("schedule.id"), nullable=False)
+    typ = db.Column(db.String, nullable=False)
+    start_hour= db.Column(db.String, nullable=False)
+    start_minute = db.Column(db.String, nullable=False)
+    start_period = db.Column(db.String, nullable=False)
+    end_hour = db.Column(db.String, nullable=False)
+    end_minute = db.Column(db.String, nullable=False)
+    end_period = db.Column(db.String, nullable=False)
+    days = db.Column(db.String, nullable=False)
+    schedule = db.Column(db.Integer, db.ForeignKey(
+        "schedule.id"), nullable=False)
 
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
         self.code = kwargs.get("code")
-        self.start_time = kwargs.get("start_time")
-        self.end_time = kwargs.get("end_time")
+        self.start_hour = kwargs.get("start_hour")
+        self.start_minute= kwargs.get("start_minute")
+        self.start_period = kwargs.get("start_period")
+        self.end_hour = kwargs.get("end_hour")
+        self.end_minute = kwargs.get("end_minute")
+        self.end_period = kwargs.get("end_period")
 
     def serialize(self):
         return {
             "name": self.name,
-            "start_time": self.start,
-            "end_time": self.end
+            "start_time": self.start_hour + ":" + self.start_minute + " " + self.start_period,
+            "end_time": self.end_hour + ":" + self.end_minute + " " + self.end_period
         }
