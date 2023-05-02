@@ -89,7 +89,7 @@ def secret_message():
     if not success:
         return session_token
     user = users_dao.get_user_by_session_token(session_token)
-    if user is not None or not user.verify_session_token(session_token):
+    if user is None or not user.verify_session_token(session_token):
         return failure_response("Invalid session token")
     return success_response({"message": "Session tokens are working."})
 
