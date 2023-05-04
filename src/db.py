@@ -143,6 +143,7 @@ class Class(db.Model):
     def __init__(self, **kwargs):
         self.name = kwargs.get("name")
         self.code = kwargs.get("code")
+        self.typ = kwargs.get("type")
         self.start_hour = kwargs.get("start_hour")
         self.start_minute= kwargs.get("start_minute")
         self.start_period = kwargs.get("start_period")
