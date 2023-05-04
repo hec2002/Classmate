@@ -72,7 +72,6 @@ class User(db.Model):
             "name": self.name,
             "email": self.email,
             "netid": self.netid,
-            "friends": [friend.serialize for friend in self.friends]
         }
 
 
@@ -121,7 +120,7 @@ class Schedule(db.Model):
         return {
             "id": self.id,
             "user": self.user_id,
-            "classes": [c.serialize for c in self.classes]
+            "classes": [c.serialize() for c in self.classes]
         }
 
 
