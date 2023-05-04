@@ -211,7 +211,7 @@ def add_friend(request_id):
         db.session.delete(friend_request)
         db.session.commit()
         return success_response({"status": "Request Denied."})
-    else:
+    elif accepted == "accepted":
         friend_request.accepted = 1
         return success_response(friend_request.serialize())
 
