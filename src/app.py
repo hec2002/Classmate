@@ -149,8 +149,6 @@ def delete_class(id):
     Endpoint for deleting a class.
     """
     class_to_delete = Class.query.get_or_404(id)
-    if user is None:
-        return failure_response("User not found.")
     db.session.delete(class_to_delete)
     db.session.commit()
     return success_response({'message': 'Class deleted successfully!'})
@@ -224,18 +222,6 @@ def add_friend(request_id):
         friend_request.accepted = 1
         return success_response(friend_request.serialize())
 
-
-@app.route('/users/<int:id>/classes/', methods=['GET'])
-def reccomend(user_id):
-    user = User.query.get(user_id)
-    if user is None:
-        return json.dumps({'error': 'User not found'}), 404
-
-    friends_count = len(user.friends)
-    classes = Class.query.filter_by(schedule=user.schedule.id).all()
-    classes_by_friends = [c for c in classes if len(c.schedule.user.friends) == friends_count]
-
-    return json.dumps({'classes': [c.serialize() for c in classes_by_friends]})
 
 @app.route('/schedules/<int:id>/', methods=['GET'])
 def get_schedule(id):
