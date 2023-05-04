@@ -1,7 +1,6 @@
 import json
-from db import db
+from db import db, User, Friendship, Schedule, Class
 from flask import Flask, request
-from db import User
 import os
 import users_dao
 import datetime
@@ -124,6 +123,77 @@ def logout():
     user.session_expiration = datetime.datetime.now()
     db.session.commit()
     return success_response({"message": "logout successful"})
+
+# new routes added for app functionality 
+
+@app.route('/', methods=['GET'])
+def get_user():
+    """
+    Endpoint for getting student by netid.
+    """
+    pass
+
+
+@app.route('', methods=['DELETE'])
+def delete_class():
+    """
+    Endpoint for deleting a class.
+    """
+    pass
+
+
+@app.route('/classes/', methods=['POST'])
+def add_class():
+    """
+    Endpoint for adding a class.
+    """
+    body = json.loads(request.data)
+    name = body.get("name")
+    code = body.get("code")
+    typ = body.get("type")
+    start_hour = body.get("start_hour")
+    start_minute = body.get("start_minute")
+    start_period = body.get("start_period")
+    end_hour = body.get("end_hour")
+    end_minute = body.get("end_minute")
+    end_period = body.get("end_period")
+    new_class = Class(start_hour=start_hour, start_minute=start_minute, start_period=start_period, code=code, name=name, typ=typ, end_hour=end_hour, end_minute=end_minute, end_period=end_period)
+    db.session.add(new_class)
+    db.session.commit()
+    return json.dumps({'message': 'Class added successfully!'})
+
+@app.route('/students/<int:student_id>/friends/', methods=['POST'])
+def add_friend(student_id):
+    """
+    Endpoint for adding a friend to a user.
+    """
+    data = json.loads
+    new_friend = Friendship(
+        student_id=student_id,
+        friend_id=data['friend_id']
+    )
+    db.session.add(new_friend)
+    db.session.commit()
+    return json.dumps({'message': 'Friend added successfully!'})
+
+@app.route('/students/<int:student_id>/schedules/', methods=['POST'])
+def recommend(student_id):
+    """
+    Endpoint for generating class recommendations based on friends.
+    """
+   
+    pass
+
+@app.route('/students/<int:student_id>/schedules/', methods=['POST'])
+def make_schedule(student_id):
+    """
+    Endpoint for getting users schedule.
+    """
+    pass
+
+
+
+
 
 
 if __name__ == "__main__":
