@@ -54,6 +54,11 @@ def register():
         return failure_response("Invalid response to required fields")
 
     created, user = users_dao.create_user(email, password, name, netid)
+    schedule = Schedule(user_id=user.id)
+    db.session.add(schedule)
+    db.session.add(user)
+    db.session.commit()
+
     if not created:
         return failure_response("This user already exists.")
 
@@ -134,7 +139,7 @@ def get_user():
     pass
 
 
-@app.route('', methods=['DELETE'])
+@app.route('/', methods=['DELETE'])
 def delete_class():
     """
     Endpoint for deleting a class.
@@ -142,11 +147,14 @@ def delete_class():
     pass
 
 
-@app.route('/classes/', methods=['POST'])
-def add_class():
+@app.route('/classes/<int:id>/', methods=['POST'])
+def add_class(id):
     """
     Endpoint for adding a class.
     """
+    schedule = Schedule.query.filter_by(id=id).first()
+    if schedule is None:
+        return failure_response("Invalid schedule id.")
     body = json.loads(request.data)
     name = body.get("name")
     code = body.get("code")
@@ -157,10 +165,13 @@ def add_class():
     end_hour = body.get("end_hour")
     end_minute = body.get("end_minute")
     end_period = body.get("end_period")
-    new_class = Class(start_hour=start_hour, start_minute=start_minute, start_period=start_period, code=code, name=name, typ=typ, end_hour=end_hour, end_minute=end_minute, end_period=end_period)
+    days = body.get("days")
+    new_class = Class(start_hour=start_hour, start_minute=start_minute, start_period=start_period, code=code, name=name, type=typ, end_hour=end_hour, end_minute=end_minute, end_period=end_period, days=days)
+    new_class.schedule = id
     db.session.add(new_class)
     db.session.commit()
-    return json.dumps({'message': 'Class added successfully!'})
+    # return success_response({'message': 'Class added successfully!'})
+    return success_response(new_class.serialize())
 
 @app.route('/students/<int:student_id>/friends/', methods=['POST'])
 def add_friend(student_id):

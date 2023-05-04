@@ -150,10 +150,14 @@ class Class(db.Model):
         self.end_hour = kwargs.get("end_hour")
         self.end_minute = kwargs.get("end_minute")
         self.end_period = kwargs.get("end_period")
+        self.days = kwargs.get("days")
 
     def serialize(self):
         return {
             "name": self.name,
             "start_time": self.start_hour + ":" + self.start_minute + " " + self.start_period,
-            "end_time": self.end_hour + ":" + self.end_minute + " " + self.end_period
+            "end_time": self.end_hour + ":" + self.end_minute + " " + self.end_period,
+            "days": self.days,
+            "type": self.typ,
+            "schedule": self.schedule
         }
