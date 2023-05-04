@@ -258,7 +258,33 @@ def recommend(user_id):
     if user is None:
         return failure_response("Invalid user.")
     friends = Friendship.query.filter((Friendship.sender_id == user_id) | (Friendship.reciever_id == user_id), Friendship.accepted == 1)
-    return success_response({"friends" : friends})
+    if not friends:
+        return failure_response("No friends to add.")
+    # return success_response({"friends" : [friend.serialize() for friend in friends]})
+    friends_as_list = [friend.serialize() for friend in friends]
+    dic = {}
+    for friend in friends_as_list:
+        if friend["sender_id"] == user_id:
+            dic[friend["receiver_id"]] = 0
+        else:
+            dic[friend["sender_id"]] = 0
+    for id in dic:
+        schedule = Schedule.query.filter_by(user_id=id).first()
+        classes = [clas.simple_serialize() for clas in schedule.classes]
+        dic[id] = classes
+    classes_in_common = {}
+    # user_schedule = Schedule.query.filter_by(user_id=user_id).first()
+    # users_classes = [clas.simple_serialize() for clas in user_schedule]
+    for user1 in dic:
+        for user2 in dic:
+            if user1 == user2 or str(user2) + " " + str(user1) in dic:
+                continue
+            else:
+                common = [clas for clas in dic[user1] if clas in dic[user2]]
+                classes_in_common[str(user1) + " " + str(user2)] = common
+    return success_response(classes_in_common)
+
+
 
 @app.route('/students/<int:student_id>/schedules/', methods=['POST'])
 def make_schedule(student_id):
