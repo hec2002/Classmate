@@ -25,6 +25,39 @@ def failure_response(message, code=404):
     return json.dumps({"error": message}), code
 
 
+@app.route('/users/')
+def get_all_users():
+    """
+    Route that gets all users.
+    """
+    users = [user.serialize() for user in User.query.all()]
+    return success_response({"user": users})
+
+@app.route('/classes/')
+def get_all_classes():
+    """
+    Route that gets all users.
+    """
+    classes = [clas.serialize() for clas in Class.query.all()]
+    return success_response({"Classes": classes})
+
+@app.route('/schedules/')
+def get_all_schedules():
+    """
+    Route that gets all users.
+    """
+    schedules = [schedule.serialize() for schedule in Schedule.query.all()]
+    return success_response({"Schedules": schedules})
+
+@app.route('/friends/')
+def get_all_friendships():
+    """
+    Route that gets all users.
+    """
+    friendships = [friendship.serialize() for friendship in Friendship.query.all()]
+    return success_response({"Friendships": friendships})
+
+
 def extract_token(request):
     """
     Helper method for extracting token
@@ -36,7 +69,6 @@ def extract_token(request):
     if not bearer_token:
         return False, failure_response("Invalid bearer token")
     return True, bearer_token
-# your routes here
 
 
 @app.route("/register/", methods=["POST"])
@@ -180,7 +212,6 @@ def add_class(id):
     new_class.schedule = id
     db.session.add(new_class)
     db.session.commit()
-    # return success_response({'message': 'Class added successfully!'})
     return success_response(new_class.serialize())
 
 @app.route('/users/<int:sender_id>/request/', methods=['POST'])
@@ -220,7 +251,46 @@ def add_friend(request_id):
         return success_response({"status": "Request Denied."})
     elif accepted == "accepted":
         friend_request.accepted = 1
+        db.session.commit()
         return success_response(friend_request.serialize())
+    else:
+        return failure_response("Invalid response")
+
+@app.route('/students/<int:user_id>/schedules/', methods=['POST'])
+def recommend(user_id):
+    """
+    Endpoint for generating class recommendations based on friends.
+    """
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        return failure_response("Invalid user.")
+    friends = Friendship.query.filter((Friendship.sender_id == user_id) | (Friendship.reciever_id == user_id), Friendship.accepted == 1)
+    if not friends:
+        return failure_response("No friends to add.")
+    # return success_response({"friends" : [friend.serialize() for friend in friends]})
+    friends_as_list = [friend.serialize() for friend in friends]
+    dic = {}
+    for friend in friends_as_list:
+        if friend["sender_id"] == user_id:
+            dic[friend["receiver_id"]] = 0
+        else:
+            dic[friend["sender_id"]] = 0
+    for id in dic:
+        schedule = Schedule.query.filter_by(user_id=id).first()
+        classes = [clas.simple_serialize() for clas in schedule.classes]
+        dic[id] = classes
+    classes_in_common = {}
+    # user_schedule = Schedule.query.filter_by(user_id=user_id).first()
+    # users_classes = [clas.simple_serialize() for clas in user_schedule]
+    for user1 in dic:
+        for user2 in dic:
+            if user1 == user2 or str(user2) + " " + str(user1) in dic:
+                continue
+            else:
+                common = [clas for clas in dic[user1] if clas in dic[user2]]
+                classes_in_common[str(user1) + " " + str(user2)] = common
+    return success_response(classes_in_common)
+
 
 
 @app.route('/schedules/<int:id>/', methods=['GET'])

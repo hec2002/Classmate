@@ -72,7 +72,6 @@ class User(db.Model):
             "name": self.name,
             "email": self.email,
             "netid": self.netid,
-            "friends": [friend.serialize for friend in self.friends]
         }
 
 
@@ -83,10 +82,10 @@ class Friendship(db.Model):
     __tablename__ = "friendship"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     timestamp = db.Column(db.String, nullable=False)
-    sender_id = db.Column(db.String, db.ForeignKey(
-        "user.netid"), nullable=False)
-    reciever_id = db.Column(db.String, db.ForeignKey(
-        "user.netid"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey(
+        "user.id"), nullable=False)
+    reciever_id = db.Column(db.Integer, db.ForeignKey(
+        "user.id"), nullable=False)
     accepted = db.Column(db.Integer)
     friend = db.relationship("User", backref=db.backref("friends", cascade="all, delete-orphan"), foreign_keys=[reciever_id])
 
@@ -121,7 +120,7 @@ class Schedule(db.Model):
         return {
             "id": self.id,
             "user": self.user_id,
-            "classes": [c.serialize for c in self.classes]
+            "classes": [c.serialize() for c in self.classes]
         }
 
 
@@ -157,9 +156,14 @@ class Class(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "code": self.code,
             "start_time": self.start_hour + ":" + self.start_minute + " " + self.start_period,
             "end_time": self.end_hour + ":" + self.end_minute + " " + self.end_period,
             "days": self.days,
             "type": self.typ,
             "schedule": self.schedule
+        }
+    def simple_serialize(self):
+        return {
+            "code": self.code
         }
