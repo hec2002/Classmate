@@ -166,6 +166,8 @@ def add_class(id):
     end_minute = body.get("end_minute")
     end_period = body.get("end_period")
     days = body.get("days")
+    if name is None or code is None or typ is None or start_hour is None or start_minute is None or start_period is None or end_hour is None or end_minute is None or end_period is None or days is None:
+        return failure_response("One of your inputs is invalid.")
     new_class = Class(start_hour=start_hour, start_minute=start_minute, start_period=start_period, code=code, name=name, type=typ, end_hour=end_hour, end_minute=end_minute, end_period=end_period, days=days)
     new_class.schedule = id
     db.session.add(new_class)
@@ -173,19 +175,45 @@ def add_class(id):
     # return success_response({'message': 'Class added successfully!'})
     return success_response(new_class.serialize())
 
-@app.route('/students/<int:student_id>/friends/', methods=['POST'])
-def add_friend(student_id):
+@app.route('/users/<int:sender_id>/request/', methods=['POST'])
+def send_friend_request(sender_id):
+    """
+    Endpoint for sending a friend request
+    """
+    sender = User.query.filter_by(id=sender_id).first()
+    if sender is None:
+        return failure_response("Invalid sender id.")
+    body = json.loads(request.data)
+    netid = body.get("netid")
+    user = User.query.filter_by(netid=netid).first()
+    if user is None:
+        return failure_response("User not found.")
+    new_request = Friendship(sender_id=sender_id, receiver_id=user.id, accepted=0, timestamp=datetime.datetime.now())
+    db.session.add(new_request)
+    db.session.commit()
+    return success_response(new_request.serialize())
+
+
+
+@app.route('/friends/requests/<int:request_id>/', methods=['POST'])
+def add_friend(request_id):
     """
     Endpoint for adding a friend to a user.
     """
-    data = json.loads
-    new_friend = Friendship(
-        student_id=student_id,
-        friend_id=data['friend_id']
-    )
-    db.session.add(new_friend)
-    db.session.commit()
-    return json.dumps({'message': 'Friend added successfully!'})
+    friend_request = Friendship.query.filter_by(id=request_id).first()
+    if friend_request is None:
+        return failure_response("Friend request not found.")
+    if friend_request.accepted != 0:
+        return failure_response("Request has already been responded to.")
+    body = json.loads(request.data)
+    accepted = body.get("accepted")
+    if accepted == "declined":
+        db.session.delete(friend_request)
+        db.session.commit()
+        return success_response({"status": "Request Denied."})
+    else:
+        friend_request.accepted = 1
+        return success_response(friend_request.serialize())
 
 @app.route('/students/<int:student_id>/schedules/', methods=['POST'])
 def recommend(student_id):

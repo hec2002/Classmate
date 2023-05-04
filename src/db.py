@@ -68,6 +68,7 @@ class User(db.Model):
 
     def serialize(self):
         return {
+            "id": self.id,
             "name": self.name,
             "email": self.email,
             "netid": self.netid,
@@ -80,14 +81,14 @@ class Friendship(db.Model):
     Class representing friendships between users.
     """
     __tablename__ = "friendship"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     timestamp = db.Column(db.String, nullable=False)
-    user_id = db.Column(db.String, db.ForeignKey(
+    sender_id = db.Column(db.String, db.ForeignKey(
         "user.netid"), nullable=False)
-    friend_id = db.Column(db.String, db.ForeignKey(
+    reciever_id = db.Column(db.String, db.ForeignKey(
         "user.netid"), nullable=False)
     accepted = db.Column(db.Integer)
-    friend = db.relationship("User", backref=db.backref("friends", cascade="all, delete-orphan"), foreign_keys=[friend_id])
+    friend = db.relationship("User", backref=db.backref("friends", cascade="all, delete-orphan"), foreign_keys=[reciever_id])
 
     def __init__(self, **kwargs):
         self.timestamp = kwargs.get("timestamp")
@@ -154,6 +155,7 @@ class Class(db.Model):
 
     def serialize(self):
         return {
+            "id": self.id,
             "name": self.name,
             "start_time": self.start_hour + ":" + self.start_minute + " " + self.start_period,
             "end_time": self.end_hour + ":" + self.end_minute + " " + self.end_period,
