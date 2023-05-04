@@ -2,7 +2,7 @@ version: "3"
 
 services:
   classmate:
-    image: hlh94/classmate
+    image: ha292/classmate
     ports:
       - "8000:8000"
     env_file:

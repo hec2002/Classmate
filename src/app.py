@@ -131,20 +131,30 @@ def logout():
 
 # new routes added for app functionality 
 
-@app.route('/', methods=['GET'])
-def get_user():
+
+@app.route('/users/<int:id>/', methods=['GET'])
+def get_user(id):
     """
-    Endpoint for getting student by netid.
+    Endpoint for getting a user by id.
     """
-    pass
+    user = User.query.filter_by(id=id).first()
+    if user is None:
+        return failure_response("Invalid user id.")
+    return success_response(user.serialize())
 
 
-@app.route('/', methods=['DELETE'])
-def delete_class():
+@app.route('/classes/<int:id>/', methods=['DELETE'])
+def delete_class(id):
     """
     Endpoint for deleting a class.
     """
-    pass
+    class_to_delete = Class.query.get_or_404(id)
+    if user is None:
+        return failure_response("User not found.")
+    db.session.delete(class_to_delete)
+    db.session.commit()
+    return success_response({'message': 'Class deleted successfully!'})
+
 
 
 @app.route('/classes/<int:id>/', methods=['POST'])
@@ -194,7 +204,6 @@ def send_friend_request(sender_id):
     return success_response(new_request.serialize())
 
 
-
 @app.route('/friends/requests/<int:request_id>/', methods=['POST'])
 def add_friend(request_id):
     """
@@ -215,24 +224,32 @@ def add_friend(request_id):
         friend_request.accepted = 1
         return success_response(friend_request.serialize())
 
-@app.route('/students/<int:student_id>/schedules/', methods=['POST'])
-def recommend(student_id):
+
+@app.route('/users/<int:id>/classes/', methods=['GET'])
+def reccomend(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return json.dumps({'error': 'User not found'}), 404
+
+    friends_count = len(user.friends)
+    classes = Class.query.filter_by(schedule=user.schedule.id).all()
+    classes_by_friends = [c for c in classes if len(c.schedule.user.friends) == friends_count]
+
+    return json.dumps({'classes': [c.serialize() for c in classes_by_friends]})
+
+@app.route('/schedules/<int:id>/', methods=['GET'])
+def get_schedule(id):
     """
-    Endpoint for generating class recommendations based on friends.
+    Endpoint for getting a schedule.
     """
-   
-    pass
-
-@app.route('/students/<int:student_id>/schedules/', methods=['POST'])
-def make_schedule(student_id):
-    """
-    Endpoint for getting users schedule.
-    """
-    pass
-
-
-
-
+    schedule = Schedule.query.get_or_404(id)
+    classes = Class.query.filter_by(schedule=id).all()
+    serialized_classes = [c.serialize() for c in classes]
+    return json.dumps({
+        'id': schedule.id,
+        'user_id': schedule.user_id,
+        'classes': serialized_classes
+    })
 
 
 if __name__ == "__main__":
