@@ -267,7 +267,6 @@ def recommend(user_id):
     friends = Friendship.query.filter((Friendship.sender_id == user_id) | (Friendship.reciever_id == user_id), Friendship.accepted == 1)
     if not friends:
         return failure_response("No friends to add.")
-    # return success_response({"friends" : [friend.serialize() for friend in friends]})
     friends_as_list = [friend.serialize() for friend in friends]
     dic = {}
     for friend in friends_as_list:
@@ -280,8 +279,6 @@ def recommend(user_id):
         classes = [clas.simple_serialize() for clas in schedule.classes]
         dic[id] = classes
     classes_in_common = {}
-    # user_schedule = Schedule.query.filter_by(user_id=user_id).first()
-    # users_classes = [clas.simple_serialize() for clas in user_schedule]
     for user1 in dic:
         for user2 in dic:
             if user1 == user2 or str(user2) + " " + str(user1) in dic:
