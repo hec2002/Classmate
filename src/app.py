@@ -25,7 +25,7 @@ def failure_response(message, code=404):
     return json.dumps({"error": message}), code
 
 
-@app.route('/users/')
+@app.route('/api/users/')
 def get_all_users():
     """
     Route that gets all users.
@@ -33,7 +33,7 @@ def get_all_users():
     users = [user.serialize() for user in User.query.all()]
     return success_response({"user": users})
 
-@app.route('/classes/')
+@app.route('/api/classes/')
 def get_all_classes():
     """
     Route that gets all users.
@@ -41,7 +41,7 @@ def get_all_classes():
     classes = [clas.serialize() for clas in Class.query.all()]
     return success_response({"Classes": classes})
 
-@app.route('/schedules/')
+@app.route('api/schedules/')
 def get_all_schedules():
     """
     Route that gets all users.
@@ -49,7 +49,7 @@ def get_all_schedules():
     schedules = [schedule.serialize() for schedule in Schedule.query.all()]
     return success_response({"Schedules": schedules})
 
-@app.route('/friends/')
+@app.route('/api/friends/')
 def get_all_friendships():
     """
     Route that gets all users.
@@ -71,7 +71,7 @@ def extract_token(request):
     return True, bearer_token
 
 
-@app.route("/register/", methods=["POST"])
+@app.route("/api/register/", methods=["POST"])
 def register():
     """
     Endpoint for registering a user
@@ -97,7 +97,7 @@ def register():
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
 
 
-@app.route("/login/", methods=["POST"])
+@app.route("/api/login/", methods=["POST"])
 def login():
     """
     Endpoint for logging a user in
@@ -116,7 +116,7 @@ def login():
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
 
 
-@app.route("/secret/", methods=["POST"])
+@app.route("/api/secret/", methods=["POST"])
 def secret_message():
     """
     Endpoint for secret message (Testing only)
@@ -130,7 +130,7 @@ def secret_message():
     return success_response({"message": "Session tokens are working."})
 
 
-@app.route("/session/", methods=["Post"])
+@app.route("/api/session/", methods=["POST"])
 def update_session():
     """
     Endpoint for updating a users session.
@@ -146,7 +146,7 @@ def update_session():
     return success_response({"session_token": user.session_token, "session_expiration": str(user.session_expiration), "update_token": user.update_token})
 
 
-@app.route("/logout/", methods=["POST"])
+@app.route("/api/logout/", methods=["POST"])
 def logout():
     """
     Endpoint for logging a user out.
@@ -164,7 +164,7 @@ def logout():
 # new routes added for app functionality 
 
 
-@app.route('/users/<int:id>/', methods=['GET'])
+@app.route('/api/users/<int:id>/', methods=['GET'])
 def get_user(id):
     """
     Endpoint for getting a user by id.
@@ -175,7 +175,7 @@ def get_user(id):
     return success_response(user.serialize())
 
 
-@app.route('/classes/<int:id>/', methods=['DELETE'])
+@app.route('/api/classes/<int:id>/', methods=['DELETE'])
 def delete_class(id):
     """
     Endpoint for deleting a class.
@@ -187,7 +187,7 @@ def delete_class(id):
 
 
 
-@app.route('/classes/<int:id>/', methods=['POST'])
+@app.route('/api/classes/<int:id>/', methods=['POST'])
 def add_class(id):
     """
     Endpoint for adding a class.
@@ -214,7 +214,7 @@ def add_class(id):
     db.session.commit()
     return success_response(new_class.serialize())
 
-@app.route('/users/<int:sender_id>/request/', methods=['POST'])
+@app.route('/api/users/<int:sender_id>/request/', methods=['POST'])
 def send_friend_request(sender_id):
     """
     Endpoint for sending a friend request
@@ -233,7 +233,7 @@ def send_friend_request(sender_id):
     return success_response(new_request.serialize())
 
 
-@app.route('/friends/requests/<int:request_id>/', methods=['POST'])
+@app.route('/api/friends/requests/<int:request_id>/', methods=['POST'])
 def add_friend(request_id):
     """
     Endpoint for adding a friend to a user.
@@ -256,7 +256,7 @@ def add_friend(request_id):
     else:
         return failure_response("Invalid response")
 
-@app.route('/students/<int:user_id>/schedules/', methods=['POST'])
+@app.route('/api/students/<int:user_id>/schedules/', methods=['POST'])
 def recommend(user_id):
     """
     Endpoint for generating class recommendations based on friends.
@@ -290,7 +290,7 @@ def recommend(user_id):
 
 
 
-@app.route('/schedules/<int:id>/', methods=['GET'])
+@app.route('/api/schedules/<int:id>/', methods=['GET'])
 def get_schedule(id):
     """
     Endpoint for getting a schedule.
